@@ -3,7 +3,6 @@ package frc.robot;
 import com.choreo.lib.Choreo;
 import com.choreo.lib.ChoreoControlFunction;
 import com.revrobotics.CANSparkMax.IdleMode;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -39,8 +38,8 @@ public class Constants {
     private static final PIDController kYController = new PIDController(1, 0, 0);
     private static final PIDController kThetaController = new PIDController(1, 0, 0);
 
-    public static final ChoreoControlFunction kSwerveController = Choreo.choreoSwerveController(kXController, kYController, kThetaController);
-
+    public static final ChoreoControlFunction kSwerveController =
+        Choreo.choreoSwerveController(kXController, kYController, kThetaController);
   }
 
   public static final class DriveConstants {

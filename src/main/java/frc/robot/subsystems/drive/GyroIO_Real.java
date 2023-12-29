@@ -16,6 +16,9 @@ public class GyroIO_Real implements GyroIO {
   private final StatusSignal<Double> yaw = pigeon.getYaw();
   private final StatusSignal<Double> yawVelocity = pigeon.getAngularVelocityZDevice();
 
+  /**
+   * Gyro IO for real robot
+   */
   public GyroIO_Real() {
     pigeon.getConfigurator().apply(new Pigeon2Configuration()); // Restore Factory Defaults
     pigeon.getConfigurator().setYaw(0);

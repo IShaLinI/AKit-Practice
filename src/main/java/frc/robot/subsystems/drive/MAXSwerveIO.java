@@ -28,9 +28,4 @@ public interface MAXSwerveIO {
     return new Rotation2d();
   }
 
-  public default void setDriveVoltage(double volts) {}
-
-  public default void setTurnVoltage(double volts) {}
-
-  public default void resetDriveEncoder() {}
 }

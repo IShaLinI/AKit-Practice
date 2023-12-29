@@ -17,20 +17,30 @@ import frc.robot.Constants.CodeConstants;
 import frc.robot.Constants.DriveConstants.SwerveModuleInformation;
 import frc.robot.Constants.MAXSwerveConstants;
 
-/** Add your docs here. */
+/**
+ * MAXSwerve IO for real robot
+ */
 public class MAXSwerveIO_Real implements MAXSwerveIO {
 
+  //Module Motors
   CANSparkMax driveMotor;
   CANSparkMax turnMotor;
 
+  //Module Encoders
   RelativeEncoder driveEncoder;
   AbsoluteEncoder turnEncoder;
 
+  //Onboard PID Controllers
   SparkMaxPIDController drivePID;
   SparkMaxPIDController turnPID;
 
+  //Variable to track various module information
   SwerveModuleInformation moduleInformation;
 
+  /**
+   * Creates a new MAXSwerveIO
+   * @param moduleInformation Module information
+   */
   public MAXSwerveIO_Real(SwerveModuleInformation moduleInformation) {
 
     this.moduleInformation = moduleInformation;
@@ -88,6 +98,9 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
     turnMotor.burnFlash();
   }
 
+  /**
+   * Updates the IO
+   */
   @Override
   public void updateInputs(MAXSwerveIOInputs inputs) {
 
@@ -103,16 +116,25 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
     inputs.turnCurrentAmps = turnMotor.getOutputCurrent();
   }
 
+  /**
+   * Sets the drive MPS Setpoint
+   */
   @Override
   public void setDriveMPS(double mps) {
     drivePID.setReference(mps, ControlType.kVelocity);
   }
 
+  /**
+   * Sets the turn angle setpoint
+   */
   @Override
   public void setTurnAngle(Rotation2d angle) {
     turnPID.setReference(angle.getRadians(), ControlType.kPosition);
   }
 
+  /**
+   * Get the turn angle
+   */
   @Override
   public Rotation2d getTurnAngle() {
     return new Rotation2d(turnEncoder.getPosition() - moduleInformation.moduleOffset.getRadians());

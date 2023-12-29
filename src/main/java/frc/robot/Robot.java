@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import com.choreo.lib.Choreo;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -26,8 +27,6 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import com.choreo.lib.Choreo;
-
 public class Robot extends LoggedRobot {
 
   public static enum RobotMode {
@@ -36,12 +35,17 @@ public class Robot extends LoggedRobot {
     REAL
   }
 
+  //Control the mode of the robot
   public static final RobotMode mode = Robot.isReal() ? RobotMode.REAL : RobotMode.SIM;
   // public static final RobotMode mode = RobotMode.REPLAY;
+
+  //Auto Command
   private Command autonomousCommand;
 
+  //Driver Controllers
   private CommandXboxController controller = new CommandXboxController(0);
 
+  //Subsystems
   private MAXSwerve drivebase =
       new MAXSwerve(
           mode == RobotMode.REAL ? new GyroIO_Real() : new GyroIO() {},
@@ -59,7 +63,7 @@ public class Robot extends LoggedRobot {
                 new MAXSwerveIO_Sim()
               });
 
-    private CommandFactory commandFactory = new CommandFactory(drivebase);
+  private CommandFactory commandFactory = new CommandFactory(drivebase);
 
   @SuppressWarnings(value = "resource")
   @Override
@@ -87,6 +91,7 @@ public class Robot extends LoggedRobot {
     }
     Logger.start();
 
+    // Set the default command for the drivebase for TeleOP driving
     drivebase.setDefaultCommand(
         drivebase.runVelocityFieldRelative(
             () ->
@@ -97,11 +102,6 @@ public class Robot extends LoggedRobot {
                         * MAXSwerveConstants.kMaxDriveSpeed,
                     -MathUtil.applyDeadband(controller.getRightX(), 0.15)
                         * DriveConstants.kMaxAngularVelocity)));
-
-
-    
-
-      
   }
 
   @Override
@@ -120,11 +120,10 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
-
+    
     autonomousCommand = commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test"));
 
     CommandScheduler.getInstance().schedule(autonomousCommand);
-
   }
 
   @Override
