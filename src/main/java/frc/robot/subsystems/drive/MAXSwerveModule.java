@@ -15,9 +15,6 @@ public class MAXSwerveModule {
   private final MAXSwerveIOInputsAutoLogged inputs = new MAXSwerveIOInputsAutoLogged();
   public final String name;
 
-  private double lastPosition = 0.0;
-  private SwerveModulePosition[] positionDeltas = new SwerveModulePosition[] {};
-
   public MAXSwerveModule(MAXSwerveIO io, String name) {
     this.io = io;
     this.name = name;
@@ -63,7 +60,4 @@ public class MAXSwerveModule {
     return new SwerveModuleState(getDriveVelocityMPS(), getTurnPosition());
   }
 
-  public SwerveModulePosition[] getPositionDeltas() {
-    return positionDeltas;
-  }
 }

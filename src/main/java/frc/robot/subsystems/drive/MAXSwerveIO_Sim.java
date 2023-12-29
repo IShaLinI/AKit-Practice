@@ -45,7 +45,7 @@ public class MAXSwerveIO_Sim implements MAXSwerveIO {
     driveMotor.update(1 / CodeConstants.kMainLoopFrequency);
     turnMotor.update(1 / CodeConstants.kMainLoopFrequency);
 
-    inputs.drivePositionMeters = driveMotor.getAngularPositionRad();
+    inputs.drivePositionMeters = driveMotor.getAngularPositionRotations() * MAXSwerveConstants.kWheelCircumferenceMeters;
     inputs.driveVelocityMPS = (driveMotor.getAngularVelocityRPM() * MAXSwerveConstants.kWheelCircumferenceMeters)/60;
     inputs.driveAppliedVolts = driveVolts;
     inputs.driveCurrentAmps = driveMotor.getCurrentDrawAmps();

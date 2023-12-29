@@ -9,6 +9,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CodeConstants;
@@ -30,7 +31,7 @@ public class MAXSwerve extends SubsystemBase {
 
   private final MAXSwerveModule[] modules;
 
-  public Pose2d lastOdoPose2d = new Pose2d();
+  private Rotation2d lastHeading = new Rotation2d();
 
   public MAXSwerve(GyroIO gyroIO, MAXSwerveIO[] MAXSwerveIOs) {
     this.gyroIO = gyroIO;
@@ -49,16 +50,23 @@ public class MAXSwerve extends SubsystemBase {
 
   public void periodic() {
 
+    lastHeading = getPose().getRotation();
+
     //Update Swerve Module Inputs
     for(var module : modules){
       module.updateInputs();
     }
     gyroIO.updateInputs(gyroInputs);
 
-    //Update Pose Estimator
-    poseEstimator.update(gyroInputs.yawPosition, getModulePositions());
+    var gyroDelta = new Rotation2d(kinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond * 1/CodeConstants.kMainLoopFrequency);
 
-    Logger.recordOutput("PoseEst", getPose());
+    lastHeading = lastHeading.plus(gyroDelta);
+
+    if (gyroInputs.connected) {
+      poseEstimator.update(gyroInputs.yawPosition, getModulePositions());
+    }else{
+      poseEstimator.update(lastHeading, getModulePositions());
+    }
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -66,6 +74,7 @@ public class MAXSwerve extends SubsystemBase {
         module.stop();
       }
     }
+
     // Log empty setpoint states when disabled
     if (DriverStation.isDisabled()) {
       Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
