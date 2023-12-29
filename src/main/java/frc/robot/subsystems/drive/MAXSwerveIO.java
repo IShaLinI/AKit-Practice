@@ -16,8 +16,6 @@ public interface MAXSwerveIO {
     public double turnVelocityRadPerSec = 0.0;
     public double turnAppliedVolts = 0.0;
     public double turnCurrentAmps = 0.0;
-    public double[] odometryDrivePositions = new double[] {};
-    public Rotation2d[] odometryTurnPositions = new Rotation2d[] {};
   }
 
   public default void updateInputs(MAXSwerveIOInputs inputs) {}
@@ -26,9 +24,13 @@ public interface MAXSwerveIO {
 
   public default void setTurnAngle(Rotation2d angle) {}
 
+  public default Rotation2d getTurnAngle(){return new Rotation2d();}
+
   public default void setDriveVoltage(double volts) {}
 
   public default void setTurnVoltage(double volts) {}
 
   public default void resetDriveEncoder() {}
+
+
 }

@@ -13,7 +13,7 @@ public class MAXSwerveModule {
 
   private final MAXSwerveIO io;
   private final MAXSwerveIOInputsAutoLogged inputs = new MAXSwerveIOInputsAutoLogged();
-  private final String name;
+  public final String name;
 
   private double lastPosition = 0.0;
   private SwerveModulePosition[] positionDeltas = new SwerveModulePosition[] {};
@@ -36,15 +36,6 @@ public class MAXSwerveModule {
 
   public void periodic() {
     Logger.processInputs("Swerve/" + name + " Module", inputs);
-    int deltaCount =
-        Math.min(inputs.odometryDrivePositions.length, inputs.odometryTurnPositions.length);
-    positionDeltas = new SwerveModulePosition[deltaCount];
-    for (int i = 0; i < deltaCount; i++) {
-      double position = inputs.odometryDrivePositions[i];
-      Rotation2d angle = inputs.odometryTurnPositions[i];
-      positionDeltas[i] = new SwerveModulePosition(position - lastPosition, angle);
-      lastPosition = position;
-    }
   }
 
   public void stop() {

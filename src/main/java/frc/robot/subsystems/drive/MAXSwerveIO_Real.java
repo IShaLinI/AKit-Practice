@@ -30,10 +30,11 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
   SparkMaxPIDController drivePID;
   SparkMaxPIDController turnPID;
 
-  Queue<Double> drivePositionQueue;
-  Queue<Double> turnPositionQueue;
+  SwerveModuleInformation moduleInformation;
 
   public MAXSwerveIO_Real(SwerveModuleInformation moduleInformation) {
+
+    this.moduleInformation = moduleInformation;
 
     driveMotor = new CANSparkMax(moduleInformation.driveCAN_ID, MotorType.kBrushless);
     turnMotor = new CANSparkMax(moduleInformation.turnCAN_ID, MotorType.kBrushless);
@@ -84,11 +85,6 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
     turnMotor.setPeriodicFramePeriod(
         PeriodicFrame.kStatus2, (int) (1000 / CodeConstants.kOdometryThreadFrequency));
 
-    drivePositionQueue =
-        SparkMaxOdometryThread.getInstance().registerSignal(driveEncoder::getPosition);
-    turnPositionQueue =
-        SparkMaxOdometryThread.getInstance().registerSignal(turnEncoder::getPosition);
-
     driveMotor.burnFlash();
     turnMotor.burnFlash();
   }
@@ -102,17 +98,11 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
     inputs.driveAppliedVolts = driveMotor.getAppliedOutput();
     inputs.driveCurrentAmps = driveMotor.getOutputCurrent();
 
-    inputs.turnPositionRad = new Rotation2d(turnEncoder.getPosition());
+    inputs.turnPositionRad = getTurnAngle();
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnMotor.getAppliedOutput();
     inputs.turnCurrentAmps = turnMotor.getOutputCurrent();
 
-    inputs.odometryDrivePositions =
-        drivePositionQueue.stream().mapToDouble((Double value) -> value).toArray();
-    inputs.odometryTurnPositions =
-        turnPositionQueue.stream()
-            .map((Double value) -> new Rotation2d(value))
-            .toArray(Rotation2d[]::new);
   }
 
   @Override
@@ -124,4 +114,10 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
   public void setTurnAngle(Rotation2d angle) {
     turnPID.setReference(angle.getRadians(), ControlType.kPosition);
   }
+
+  @Override
+  public Rotation2d getTurnAngle(){
+    return new Rotation2d(turnEncoder.getPosition() - moduleInformation.moduleOffset.getRadians());
+  }
+
 }

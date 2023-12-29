@@ -15,7 +15,6 @@ public class GyroIO_Real implements GyroIO {
 
   private final Pigeon2 pigeon = new Pigeon2(CANID.kPigeon);
   private final StatusSignal<Double> yaw = pigeon.getYaw();
-  private final Queue<Double> yawPositionQueue;
   private final StatusSignal<Double> yawVelocity = pigeon.getAngularVelocityZDevice();
 
   public GyroIO_Real() {
@@ -26,9 +25,6 @@ public class GyroIO_Real implements GyroIO {
     yawVelocity.setUpdateFrequency(CodeConstants.kOdometryThreadFrequency);
     pigeon.optimizeBusUtilization();
 
-    yawPositionQueue =
-        SparkMaxOdometryThread.getInstance()
-            .registerSignal(() -> pigeon.getYaw().getValueAsDouble());
   }
 
   @Override
@@ -36,11 +32,5 @@ public class GyroIO_Real implements GyroIO {
     inputs.connected = BaseStatusSignal.refreshAll(yaw, yawVelocity).equals(StatusCode.OK);
     inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble());
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(yawVelocity.getValueAsDouble());
-
-    inputs.odometryYawPositions =
-        yawPositionQueue.stream()
-            .map((Double value) -> Rotation2d.fromDegrees(value))
-            .toArray(Rotation2d[]::new);
-    yawPositionQueue.clear();
   }
 }

@@ -1,8 +1,9 @@
 package frc.robot.subsystems.drive;
 
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Twist2d;
+
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -13,24 +14,23 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CodeConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.MAXSwerveConstants;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class MAXSwerve extends SubsystemBase {
-  public static final Lock odometryLock = new ReentrantLock();
 
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
   private SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(DriveConstants.kModuleLocations);
-  private Pose2d pose = new Pose2d();
-  private Rotation2d lastHeading = new Rotation2d();
+
+  private SwerveDrivePoseEstimator poseEstimator;
 
   private final MAXSwerveModule[] modules;
+
+  public Pose2d lastOdoPose2d = new Pose2d();
 
   public MAXSwerve(GyroIO gyroIO, MAXSwerveIO[] MAXSwerveIOs) {
     this.gyroIO = gyroIO;
@@ -42,20 +42,23 @@ public class MAXSwerve extends SubsystemBase {
           new MAXSwerveModule(
               MAXSwerveIOs[i], DriveConstants.kIndexedSwerveModuleInformation[i].name + " Module");
     }
+
+    poseEstimator = new SwerveDrivePoseEstimator(kinematics, gyroInputs.yawPosition, getModulePositions(), new Pose2d());
+
   }
 
   public void periodic() {
 
-    odometryLock.lock(); // Prevents odometry updates while reading data
-    gyroIO.updateInputs(gyroInputs);
-    for (var module : modules) {
+    //Update Swerve Module Inputs
+    for(var module : modules){
       module.updateInputs();
     }
-    odometryLock.unlock();
-    Logger.processInputs("Swerve/Gyro", gyroInputs);
-    for (var module : modules) {
-      module.periodic();
-    }
+    gyroIO.updateInputs(gyroInputs);
+
+    //Update Pose Estimator
+    poseEstimator.update(gyroInputs.yawPosition, getModulePositions());
+
+    Logger.recordOutput("PoseEst", getPose());
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -69,33 +72,6 @@ public class MAXSwerve extends SubsystemBase {
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
 
-    // Update odometry
-    int deltaCount =
-        gyroInputs.connected ? gyroInputs.odometryYawPositions.length : Integer.MAX_VALUE;
-    for (int i = 0; i < 4; i++) {
-      deltaCount = Math.min(deltaCount, modules[i].getPositionDeltas().length);
-    }
-    for (int deltaIndex = 0; deltaIndex < deltaCount; deltaIndex++) {
-      // Read wheel deltas from each module
-      SwerveModulePosition[] wheelDeltas = new SwerveModulePosition[4];
-      for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        wheelDeltas[moduleIndex] = modules[moduleIndex].getPositionDeltas()[deltaIndex];
-      }
-
-      // The twist represents the motion of the robot since the last
-      // sample in x, y, and theta based only on the modules, without
-      // the gyro. The gyro is always disconnected in simulation.
-      var twist = kinematics.toTwist2d(wheelDeltas);
-      if (gyroInputs.connected) {
-        // If the gyro is connected, replace the theta component of the twist
-        // with the change in angle since the last sample.
-        Rotation2d gyroRotation = gyroInputs.odometryYawPositions[deltaIndex];
-        twist = new Twist2d(twist.dx, twist.dy, gyroRotation.minus(lastHeading).getRadians());
-        lastHeading = gyroRotation;
-      }
-      // Apply the twist (change since last sample) to the current pose
-      pose = pose.exp(twist);
-    }
   }
 
   public Command runVelocity(Supplier<ChassisSpeeds> speeds) {
@@ -127,7 +103,7 @@ public class MAXSwerve extends SubsystemBase {
 
   public Command runVelocityFieldRelative(Supplier<ChassisSpeeds> speeds) {
     return this.runVelocity(
-        () -> ChassisSpeeds.fromFieldRelativeSpeeds(speeds.get(), new Rotation2d()));
+        () -> ChassisSpeeds.fromFieldRelativeSpeeds(speeds.get(), getPose().getRotation()));
   }
 
   /** Returns the module states (turn angles and drive velocitoes) for all of the modules. */
@@ -140,19 +116,27 @@ public class MAXSwerve extends SubsystemBase {
     return states;
   }
 
+  private SwerveModulePosition[] getModulePositions() {
+    SwerveModulePosition[] positions = new SwerveModulePosition[4];
+    for (int i = 0; i < 4; i++) {
+      positions[i] = modules[i].getSwerveModulePosition();
+    }
+    return positions;
+  }
+
   /** Returns the current odometry pose. */
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
-    return pose;
+    return poseEstimator.getEstimatedPosition();
   }
 
   /** Returns the current odometry rotation. */
   public Rotation2d getRotation() {
-    return pose.getRotation();
+    return getPose().getRotation();
   }
 
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
-    this.pose = pose;
+    poseEstimator.resetPosition(gyroInputs.yawPosition ,getModulePositions(), pose);
   }
 }
