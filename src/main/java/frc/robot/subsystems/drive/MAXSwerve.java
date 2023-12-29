@@ -20,52 +20,51 @@ import org.littletonrobotics.junction.Logger;
 
 public class MAXSwerve extends SubsystemBase {
 
-  //Gryo IO
+  // Gryo IO
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
-  //Swerve Kinematics
+  // Swerve Kinematics
   private SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(DriveConstants.kModuleLocations);
 
-  //Odometry
+  // Odometry
   private SwerveDrivePoseEstimator poseEstimator;
 
-  //Array of swerve modules
+  // Array of swerve modules
   private final MAXSwerveModule[] modules;
 
-  //Track the last heading for when the gyro is disconnected/simulated
+  // Track the last heading for when the gyro is disconnected/simulated
   private Rotation2d lastHeading = new Rotation2d();
 
   /**
    * Creates a new MAXSwerve drivebase
+   *
    * @param gyroIO GyroIO
    * @param MAXSwerveIOs Array of MAXSwerveIOs
    */
   public MAXSwerve(GyroIO gyroIO, MAXSwerveIO[] MAXSwerveIOs) {
 
-    //Set gyroIO
+    // Set gyroIO
     this.gyroIO = gyroIO;
 
-    //Create array of swerve modules
+    // Create array of swerve modules
     modules = new MAXSwerveModule[MAXSwerveIOs.length];
 
-    //Create a swerve module for each MAXSwerveIO
+    // Create a swerve module for each MAXSwerveIO
     for (int i = 0; i < MAXSwerveIOs.length; i++) {
       modules[i] =
           new MAXSwerveModule(
               MAXSwerveIOs[i], DriveConstants.kIndexedSwerveModuleInformation[i].name + " Module");
     }
 
-    //Create the pose estimator
+    // Create the pose estimator
     poseEstimator =
         new SwerveDrivePoseEstimator(
             kinematics, gyroInputs.yawPosition, getModulePositions(), new Pose2d());
   }
 
-  /**
-   * This code runs at 50hz and is responsible for updating the IO and pose estimator
-   */
+  /** This code runs at 50hz and is responsible for updating the IO and pose estimator */
   public void periodic() {
 
     lastHeading = getPose().getRotation();
@@ -106,6 +105,7 @@ public class MAXSwerve extends SubsystemBase {
 
   /**
    * Runs the drivebase using a continuous Chassis Speed Input
+   *
    * @param speeds Continuous Chassis Speed Input
    * @return Command that runs the drivebase
    */
@@ -141,6 +141,7 @@ public class MAXSwerve extends SubsystemBase {
 
   /**
    * Runs the drivebase using a continuous Chassis Speed Input in field relative mode
+   *
    * @param speeds Continuous Chassis Speed Input
    * @return Command that runs the drivebase in field relative mode
    */
@@ -151,22 +152,22 @@ public class MAXSwerve extends SubsystemBase {
 
   /**
    * Runs the drivebase directly using a chassis speed input
+   *
    * @param speeds desired chassis speed
    */
-  public void runChassisSpeeds(ChassisSpeeds speeds){
-    speeds = ChassisSpeeds.discretize(speeds, 1/CodeConstants.kMainLoopFrequency);
+  public void runChassisSpeeds(ChassisSpeeds speeds) {
+    speeds = ChassisSpeeds.discretize(speeds, 1 / CodeConstants.kMainLoopFrequency);
     SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(speeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, MAXSwerveConstants.kMaxDriveSpeed);
 
     SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
 
-    for(int i = 0; i < modules.length; i++){
+    for (int i = 0; i < modules.length; i++) {
       optimizedSetpointStates[i] = modules[i].run(setpointStates[i]);
     }
 
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
     Logger.recordOutput("SwerveStates/SetpointsOptimized", optimizedSetpointStates);
-    
   }
 
   /** Returns the module states (turn angles and drive velocitoes) for all of the modules. */
@@ -179,7 +180,7 @@ public class MAXSwerve extends SubsystemBase {
     return states;
   }
 
-  //Returns the distance and angle of each module
+  // Returns the distance and angle of each module
   private SwerveModulePosition[] getModulePositions() {
     SwerveModulePosition[] positions = new SwerveModulePosition[4];
     for (int i = 0; i < 4; i++) {
@@ -201,9 +202,9 @@ public class MAXSwerve extends SubsystemBase {
 
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
-    if(RobotBase.isReal()){
+    if (RobotBase.isReal()) {
       poseEstimator.resetPosition(gyroInputs.yawPosition, getModulePositions(), pose);
-    }else{
+    } else {
       poseEstimator.resetPosition(pose.getRotation(), getModulePositions(), pose);
     }
   }

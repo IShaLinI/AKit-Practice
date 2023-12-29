@@ -5,6 +5,8 @@
 package frc.robot;
 
 import com.choreo.lib.Choreo;
+import com.choreo.lib.ChoreoTrajectory;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -23,6 +25,7 @@ import frc.robot.subsystems.drive.MAXSwerveIO_Sim;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -35,17 +38,18 @@ public class Robot extends LoggedRobot {
     REAL
   }
 
-  //Control the mode of the robot
+  // Control the mode of the robot
   public static final RobotMode mode = Robot.isReal() ? RobotMode.REAL : RobotMode.SIM;
   // public static final RobotMode mode = RobotMode.REPLAY;
 
-  //Auto Command
-  private Command autonomousCommand;
+  // Auto Command
+  private final LoggedDashboardChooser<Command> autoChooser =
+      new LoggedDashboardChooser<>("Auto Chooser");
 
-  //Driver Controllers
+  // Driver Controllers
   private CommandXboxController controller = new CommandXboxController(0);
 
-  //Subsystems
+  // Subsystems
   private MAXSwerve drivebase =
       new MAXSwerve(
           mode == RobotMode.REAL ? new GyroIO_Real() : new GyroIO() {},
@@ -91,6 +95,8 @@ public class Robot extends LoggedRobot {
     }
     Logger.start();
 
+    Logger.recordOutput("ChoreoTrajectory", new ChoreoTrajectory().getPoses());
+
     // Set the default command for the drivebase for TeleOP driving
     drivebase.setDefaultCommand(
         drivebase.runVelocityFieldRelative(
@@ -102,6 +108,12 @@ public class Robot extends LoggedRobot {
                         * MAXSwerveConstants.kMaxDriveSpeed,
                     -MathUtil.applyDeadband(controller.getRightX(), 0.15)
                         * DriveConstants.kMaxAngularVelocity)));
+
+    autoChooser.addDefaultOption("None", null);
+    autoChooser.addOption(
+        "Test", commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test"), commandFactory.TestEvents()));
+    autoChooser.addOption(
+        "Test2", commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test2")));
   }
 
   @Override
@@ -120,10 +132,9 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
-    
-    autonomousCommand = commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test"));
-
-    CommandScheduler.getInstance().schedule(autonomousCommand);
+    if (autoChooser.get() != null) {
+      CommandScheduler.getInstance().schedule(autoChooser.get());
+    }
   }
 
   @Override
@@ -131,7 +142,10 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousExit() {
-    CommandScheduler.getInstance().cancel(autonomousCommand);
+    if (autoChooser.get() != null){
+      CommandScheduler.getInstance().cancel(autoChooser.get());
+      CommandScheduler.getInstance().schedule(drivebase.stop());
+    }
   }
 
   @Override

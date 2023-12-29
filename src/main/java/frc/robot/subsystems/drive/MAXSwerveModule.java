@@ -11,11 +11,11 @@ import org.littletonrobotics.junction.Logger;
 
 public class MAXSwerveModule {
 
-  //MAXSwerve IO
+  // MAXSwerve IO
   private final MAXSwerveIO io;
   private final MAXSwerveIOInputsAutoLogged inputs = new MAXSwerveIOInputsAutoLogged();
 
-  //Name to identify the module
+  // Name to identify the module
   public final String name;
 
   public MAXSwerveModule(MAXSwerveIO io, String name) {
@@ -29,6 +29,7 @@ public class MAXSwerveModule {
 
   /**
    * Sets the desired state of the module
+   *
    * @param desiredState The desired state of the module
    * @return The optimized state of the module for reference
    */
@@ -39,9 +40,7 @@ public class MAXSwerveModule {
     return optimizedState;
   }
 
-  /**
-   * Logs the module IO
-   */
+  /** Logs the module IO */
   public void periodic() {
     Logger.processInputs("Swerve/" + name + " Module", inputs);
   }

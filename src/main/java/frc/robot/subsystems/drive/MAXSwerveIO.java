@@ -27,5 +27,4 @@ public interface MAXSwerveIO {
   public default Rotation2d getTurnAngle() {
     return new Rotation2d();
   }
-
 }
