@@ -8,6 +8,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CodeConstants;
@@ -16,6 +17,8 @@ import frc.robot.Constants.MAXSwerveConstants;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+
+import com.ctre.phoenix6.mechanisms.swerve.SwerveModule;
 
 public class MAXSwerve extends SubsystemBase {
 
@@ -117,6 +120,22 @@ public class MAXSwerve extends SubsystemBase {
         () -> ChassisSpeeds.fromFieldRelativeSpeeds(speeds.get(), getPose().getRotation()));
   }
 
+  public void runChassisSpeeds(ChassisSpeeds speeds){
+    speeds = ChassisSpeeds.discretize(speeds, 1/CodeConstants.kMainLoopFrequency);
+    SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(speeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, MAXSwerveConstants.kMaxDriveSpeed);
+
+    SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
+
+    for(int i = 0; i < modules.length; i++){
+      optimizedSetpointStates[i] = modules[i].run(setpointStates[i]);
+    }
+
+    Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
+    Logger.recordOutput("SwerveStates/SetpointsOptimized", optimizedSetpointStates);
+    
+  }
+
   /** Returns the module states (turn angles and drive velocitoes) for all of the modules. */
   @AutoLogOutput(key = "SwerveStates/Measured")
   private SwerveModuleState[] getModuleStates() {
@@ -148,6 +167,10 @@ public class MAXSwerve extends SubsystemBase {
 
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
-    poseEstimator.resetPosition(gyroInputs.yawPosition, getModulePositions(), pose);
+    if(RobotBase.isReal()){
+      poseEstimator.resetPosition(gyroInputs.yawPosition, getModulePositions(), pose);
+    }else{
+      poseEstimator.resetPosition(pose.getRotation(), getModulePositions(), pose);
+    }
   }
 }

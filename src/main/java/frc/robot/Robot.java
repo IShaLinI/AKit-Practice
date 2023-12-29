@@ -26,6 +26,8 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
+import com.choreo.lib.Choreo;
+
 public class Robot extends LoggedRobot {
 
   public static enum RobotMode {
@@ -56,6 +58,8 @@ public class Robot extends LoggedRobot {
                 new MAXSwerveIO_Sim(),
                 new MAXSwerveIO_Sim()
               });
+
+    private CommandFactory commandFactory = new CommandFactory(drivebase);
 
   @SuppressWarnings(value = "resource")
   @Override
@@ -93,6 +97,11 @@ public class Robot extends LoggedRobot {
                         * MAXSwerveConstants.kMaxDriveSpeed,
                     -MathUtil.applyDeadband(controller.getRightX(), 0.15)
                         * DriveConstants.kMaxAngularVelocity)));
+
+
+    
+
+      
   }
 
   @Override
@@ -110,13 +119,21 @@ public class Robot extends LoggedRobot {
   public void disabledExit() {}
 
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+
+    autonomousCommand = commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test"));
+
+    CommandScheduler.getInstance().schedule(autonomousCommand);
+
+  }
 
   @Override
   public void autonomousPeriodic() {}
 
   @Override
-  public void autonomousExit() {}
+  public void autonomousExit() {
+    CommandScheduler.getInstance().cancel(autonomousCommand);
+  }
 
   @Override
   public void teleopInit() {}
