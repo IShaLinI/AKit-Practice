@@ -35,6 +35,7 @@ public class Robot extends LoggedRobot {
   }
 
   public static final RobotMode mode = Robot.isReal() ? RobotMode.REAL : RobotMode.SIM;
+  // public static final RobotMode mode = RobotMode.REPLAY;
   private Command autonomousCommand;
 
   private CommandXboxController controller = new CommandXboxController(0);
@@ -86,22 +87,17 @@ public class Robot extends LoggedRobot {
         drivebase.runVelocityFieldRelative(
             () ->
                 new ChassisSpeeds(
-                    -MathUtil.applyDeadband(controller.getLeftY(), 0.15) * MAXSwerveConstants.kMaxDriveSpeed,
-                    -MathUtil.applyDeadband(controller.getLeftX(), 0.15) * MAXSwerveConstants.kMaxDriveSpeed,
-                    -MathUtil.applyDeadband(controller.getRightX(), 0.15) * DriveConstants.kMaxAngularVelocity)));
-
-        // drivebase.setDefaultCommand(
-        // drivebase.runVelocityFieldRelative(
-        //     () ->
-        //         new ChassisSpeeds(
-        //             0,
-        //             0,
-        //             1)));
+                    -MathUtil.applyDeadband(controller.getLeftY(), 0.15)
+                        * MAXSwerveConstants.kMaxDriveSpeed,
+                    -MathUtil.applyDeadband(controller.getLeftX(), 0.15)
+                        * MAXSwerveConstants.kMaxDriveSpeed,
+                    -MathUtil.applyDeadband(controller.getRightX(), 0.15)
+                        * DriveConstants.kMaxAngularVelocity)));
   }
 
   @Override
   public void robotPeriodic() {
-     CommandScheduler.getInstance().run();
+    CommandScheduler.getInstance().run();
   }
 
   @Override

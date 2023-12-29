@@ -9,9 +9,7 @@ import edu.wpi.first.math.util.Units;
 public class Constants {
 
   public static final class CodeConstants {
-
     public static final double kMainLoopFrequency = 50; // Hz
-    public static final double kOdometryThreadFrequency = 250; // Hz
   }
 
   public static final class CANID {

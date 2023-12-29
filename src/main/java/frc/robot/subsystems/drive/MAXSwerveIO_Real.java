@@ -16,7 +16,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.Constants.CodeConstants;
 import frc.robot.Constants.DriveConstants.SwerveModuleInformation;
 import frc.robot.Constants.MAXSwerveConstants;
-import java.util.Queue;
 
 /** Add your docs here. */
 public class MAXSwerveIO_Real implements MAXSwerveIO {
@@ -50,7 +49,7 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
 
     driveEncoder.setPositionConversionFactor(MAXSwerveConstants.kDriveEncoderPositionFactor);
     driveEncoder.setVelocityConversionFactor(MAXSwerveConstants.kDriveEncoderVelocityFactor);
-    driveEncoder.setMeasurementPeriod(10);
+    driveEncoder.setMeasurementPeriod((int) (1000 / CodeConstants.kMainLoopFrequency));
     driveEncoder.setAverageDepth(2);
 
     turnEncoder.setPositionConversionFactor(MAXSwerveConstants.kTurnEncoderPositionFactor);
@@ -81,9 +80,9 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
     turnMotor.setSmartCurrentLimit(MAXSwerveConstants.kTurnCurrentLimit);
 
     driveMotor.setPeriodicFramePeriod(
-        PeriodicFrame.kStatus2, (int) (1000 / CodeConstants.kOdometryThreadFrequency));
+        PeriodicFrame.kStatus2, (int) (1000 / CodeConstants.kMainLoopFrequency));
     turnMotor.setPeriodicFramePeriod(
-        PeriodicFrame.kStatus2, (int) (1000 / CodeConstants.kOdometryThreadFrequency));
+        PeriodicFrame.kStatus2, (int) (1000 / CodeConstants.kMainLoopFrequency));
 
     driveMotor.burnFlash();
     turnMotor.burnFlash();
@@ -102,7 +101,6 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnMotor.getAppliedOutput();
     inputs.turnCurrentAmps = turnMotor.getOutputCurrent();
-
   }
 
   @Override
@@ -116,8 +114,7 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
   }
 
   @Override
-  public Rotation2d getTurnAngle(){
+  public Rotation2d getTurnAngle() {
     return new Rotation2d(turnEncoder.getPosition() - moduleInformation.moduleOffset.getRadians());
   }
-
 }

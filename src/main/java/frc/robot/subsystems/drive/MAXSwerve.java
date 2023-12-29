@@ -3,13 +3,11 @@ package frc.robot.subsystems.drive;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CodeConstants;
@@ -44,27 +42,32 @@ public class MAXSwerve extends SubsystemBase {
               MAXSwerveIOs[i], DriveConstants.kIndexedSwerveModuleInformation[i].name + " Module");
     }
 
-    poseEstimator = new SwerveDrivePoseEstimator(kinematics, gyroInputs.yawPosition, getModulePositions(), new Pose2d());
-
+    poseEstimator =
+        new SwerveDrivePoseEstimator(
+            kinematics, gyroInputs.yawPosition, getModulePositions(), new Pose2d());
   }
 
   public void periodic() {
 
     lastHeading = getPose().getRotation();
 
-    //Update Swerve Module Inputs
-    for(var module : modules){
+    // Update Swerve Module Inputs
+    for (var module : modules) {
       module.updateInputs();
     }
     gyroIO.updateInputs(gyroInputs);
 
-    var gyroDelta = new Rotation2d(kinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond * 1/CodeConstants.kMainLoopFrequency);
+    var gyroDelta =
+        new Rotation2d(
+            kinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond
+                * 1
+                / CodeConstants.kMainLoopFrequency);
 
     lastHeading = lastHeading.plus(gyroDelta);
 
     if (gyroInputs.connected) {
       poseEstimator.update(gyroInputs.yawPosition, getModulePositions());
-    }else{
+    } else {
       poseEstimator.update(lastHeading, getModulePositions());
     }
 
@@ -80,7 +83,6 @@ public class MAXSwerve extends SubsystemBase {
       Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
-
   }
 
   public Command runVelocity(Supplier<ChassisSpeeds> speeds) {
@@ -146,6 +148,6 @@ public class MAXSwerve extends SubsystemBase {
 
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
-    poseEstimator.resetPosition(gyroInputs.yawPosition ,getModulePositions(), pose);
+    poseEstimator.resetPosition(gyroInputs.yawPosition, getModulePositions(), pose);
   }
 }

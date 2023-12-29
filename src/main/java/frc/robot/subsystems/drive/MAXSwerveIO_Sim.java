@@ -27,17 +27,14 @@ public class MAXSwerveIO_Sim implements MAXSwerveIO {
   private double turnVolts = 0.0;
 
   private PIDController turnController = new PIDController(15, 0.0, 0.0);
-  private PIDController driveController = new PIDController(3, 0.0, 0.0);
-  private SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0.0, MAXSwerveConstants.kDriveFF*12);
-
+  private PIDController driveController = new PIDController(5, 0.0, 0.0);
+  private SimpleMotorFeedforward driveFeedforward =
+      new SimpleMotorFeedforward(0.0, MAXSwerveConstants.kDriveFF * 12);
 
   public MAXSwerveIO_Sim() {
-
     turnController.enableContinuousInput(-Math.PI, Math.PI);
-
     turnMotor.setState(turnAbsoluteInitialPosition.getRadians(), 0);
   }
-
 
   @Override
   public void updateInputs(MAXSwerveIOInputs inputs) {
@@ -45,8 +42,10 @@ public class MAXSwerveIO_Sim implements MAXSwerveIO {
     driveMotor.update(1 / CodeConstants.kMainLoopFrequency);
     turnMotor.update(1 / CodeConstants.kMainLoopFrequency);
 
-    inputs.drivePositionMeters = driveMotor.getAngularPositionRotations() * MAXSwerveConstants.kWheelCircumferenceMeters;
-    inputs.driveVelocityMPS = (driveMotor.getAngularVelocityRPM() * MAXSwerveConstants.kWheelCircumferenceMeters)/60;
+    inputs.drivePositionMeters =
+        driveMotor.getAngularPositionRotations() * MAXSwerveConstants.kWheelCircumferenceMeters;
+    inputs.driveVelocityMPS =
+        (driveMotor.getAngularVelocityRPM() * MAXSwerveConstants.kWheelCircumferenceMeters) / 60;
     inputs.driveAppliedVolts = driveVolts;
     inputs.driveCurrentAmps = driveMotor.getCurrentDrawAmps();
 
@@ -54,7 +53,6 @@ public class MAXSwerveIO_Sim implements MAXSwerveIO {
     inputs.turnVelocityRadPerSec = turnMotor.getAngularVelocityRadPerSec();
     inputs.turnAppliedVolts = turnVolts;
     inputs.turnCurrentAmps = turnMotor.getCurrentDrawAmps();
-
   }
 
   @Override
@@ -72,9 +70,10 @@ public class MAXSwerveIO_Sim implements MAXSwerveIO {
   @Override
   public void setDriveMPS(double mps) {
 
-    double currentMPS = (driveMotor.getAngularVelocityRPM() * MAXSwerveConstants.kWheelCircumferenceMeters)/60;
+    double currentMPS =
+        (driveMotor.getAngularVelocityRPM() * MAXSwerveConstants.kWheelCircumferenceMeters) / 60;
 
-    setDriveVoltage(driveFeedforward.calculate(mps) + driveController.calculate(currentMPS,mps) );
+    setDriveVoltage(driveFeedforward.calculate(mps) + driveController.calculate(currentMPS, mps));
   }
 
   @Override
@@ -88,8 +87,7 @@ public class MAXSwerveIO_Sim implements MAXSwerveIO {
   }
 
   @Override
-  public Rotation2d getTurnAngle(){
+  public Rotation2d getTurnAngle() {
     return new Rotation2d(turnMotor.getAngularPositionRad());
   }
-
 }

@@ -59,5 +59,4 @@ public class MAXSwerveModule {
   public SwerveModuleState getSwerveModuleState() {
     return new SwerveModuleState(getDriveVelocityMPS(), getTurnPosition());
   }
-
 }

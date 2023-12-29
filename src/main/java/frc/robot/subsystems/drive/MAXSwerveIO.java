@@ -24,13 +24,13 @@ public interface MAXSwerveIO {
 
   public default void setTurnAngle(Rotation2d angle) {}
 
-  public default Rotation2d getTurnAngle(){return new Rotation2d();}
+  public default Rotation2d getTurnAngle() {
+    return new Rotation2d();
+  }
 
   public default void setDriveVoltage(double volts) {}
 
   public default void setTurnVoltage(double volts) {}
 
   public default void resetDriveEncoder() {}
-
-
 }

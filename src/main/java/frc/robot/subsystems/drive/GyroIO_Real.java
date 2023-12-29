@@ -9,7 +9,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Constants.CANID;
 import frc.robot.Constants.CodeConstants;
-import java.util.Queue;
 
 public class GyroIO_Real implements GyroIO {
 
@@ -18,13 +17,11 @@ public class GyroIO_Real implements GyroIO {
   private final StatusSignal<Double> yawVelocity = pigeon.getAngularVelocityZDevice();
 
   public GyroIO_Real() {
-
     pigeon.getConfigurator().apply(new Pigeon2Configuration()); // Restore Factory Defaults
     pigeon.getConfigurator().setYaw(0);
-    yaw.setUpdateFrequency(CodeConstants.kOdometryThreadFrequency);
-    yawVelocity.setUpdateFrequency(CodeConstants.kOdometryThreadFrequency);
+    yaw.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
+    yawVelocity.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
     pigeon.optimizeBusUtilization();
-
   }
 
   @Override
