@@ -86,16 +86,16 @@ public class Robot extends LoggedRobot {
         drivebase.runVelocityFieldRelative(
             () ->
                 new ChassisSpeeds(
-                    -MathUtil.applyDeadband(controller.getLeftY(), 0.015) * MAXSwerveConstants.kMaxDriveSpeed,
-                    -MathUtil.applyDeadband(controller.getLeftX(), 0.015) * MAXSwerveConstants.kMaxDriveSpeed,
-                    MathUtil.applyDeadband(controller.getRightX(), 0.015) * DriveConstants.kMaxAngularVelocity)));
+                    -MathUtil.applyDeadband(controller.getLeftY(), 0.15) * MAXSwerveConstants.kMaxDriveSpeed,
+                    -MathUtil.applyDeadband(controller.getLeftX(), 0.15) * MAXSwerveConstants.kMaxDriveSpeed,
+                    MathUtil.applyDeadband(controller.getRightX(), 0.15) * DriveConstants.kMaxAngularVelocity)));
 
         // drivebase.setDefaultCommand(
         // drivebase.runVelocityFieldRelative(
         //     () ->
         //         new ChassisSpeeds(
-        //             1,
         //             0,
+        //             4.8,
         //             0)));
   }
 

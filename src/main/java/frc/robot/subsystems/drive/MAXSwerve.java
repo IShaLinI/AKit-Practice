@@ -101,9 +101,6 @@ public class MAXSwerve extends SubsystemBase {
   public Command runVelocity(Supplier<ChassisSpeeds> speeds) {
     return this.run(
         () -> {
-
-          System.out.println(speeds.get().vxMetersPerSecond);
-
           // Calculate module setpoints
           ChassisSpeeds discreteSpeeds =
               ChassisSpeeds.discretize(speeds.get(), 1 / CodeConstants.kMainLoopFrequency);
