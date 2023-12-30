@@ -34,9 +34,9 @@ public class Constants {
 
   public static final class AutoConstants {
 
-    private static final PIDController kXController = new PIDController(1, 0, 0);
-    private static final PIDController kYController = new PIDController(1, 0, 0);
-    private static final PIDController kThetaController = new PIDController(1, 0, 0);
+    public static final PIDController kXController = new PIDController(1, 0, 0);
+    public static final PIDController kYController = new PIDController(1, 0, 0);
+    public static final PIDController kThetaController = new PIDController(1, 0, 0);
 
     public static final ChoreoControlFunction kSwerveController =
         Choreo.choreoSwerveController(kXController, kYController, kThetaController);

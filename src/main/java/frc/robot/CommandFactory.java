@@ -2,8 +2,13 @@ package frc.robot;
 
 import com.choreo.lib.Choreo;
 import com.choreo.lib.ChoreoTrajectory;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants.AutoConstants;
@@ -57,6 +62,36 @@ public class CommandFactory {
     );
 
     return trajectorySequence.alongWith(eventSequence);
+
+  }
+
+  public Command goToPose(Pose2d targetPose){
+
+    return new FunctionalCommand(
+        () -> drivebase.getPose(),
+        () -> {
+
+          Logger.recordOutput("GoToLocation", targetPose);
+
+          Pose2d currentPose = drivebase.getPose();
+
+          var xController = AutoConstants.kXController;
+          var yController = AutoConstants.kYController;
+          var thetaController = AutoConstants.kThetaController;
+
+          var xSpeed = xController.calculate(currentPose.getTranslation().getX(), targetPose.getTranslation().getX());
+          var ySpeed = yController.calculate(currentPose.getTranslation().getY(), targetPose.getTranslation().getY());
+          var thetaSpeed = thetaController.calculate(currentPose.getRotation().getRadians(), targetPose.getRotation().getRadians());
+
+          thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+          drivebase.runChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed), currentPose.getRotation()));
+
+        },
+        (interrupted) -> CommandScheduler.getInstance().schedule(drivebase.stop()),
+        () -> false,
+        drivebase
+    );
 
   }
 

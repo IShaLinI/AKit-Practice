@@ -8,6 +8,8 @@ import com.choreo.lib.Choreo;
 import com.choreo.lib.ChoreoTrajectory;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
@@ -114,6 +116,11 @@ public class Robot extends LoggedRobot {
         "Test", commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test"), commandFactory.TestEvents()));
     autoChooser.addOption(
         "Test2", commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test2")));
+
+    controller.a().whileTrue(
+      commandFactory.goToPose(new Pose2d(4,4 , new Rotation2d(Math.PI)))
+    );
+
   }
 
   @Override
