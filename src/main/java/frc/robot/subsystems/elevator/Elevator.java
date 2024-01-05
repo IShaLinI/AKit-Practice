@@ -36,6 +36,7 @@ public class Elevator extends SubsystemBase {
 
     Logger.recordOutput("Elevator/CurrentHeight", elevatorInputs.currentHeightInches);
     Logger.recordOutput("Elevator/Setpoint", heightSetpoint);
+    Logger.recordOutput("Elevator/Setpoint Name", currentSetpoint.name());
 
     set3DElevatorPoses();
 

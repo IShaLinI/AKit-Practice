@@ -5,7 +5,6 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.revrobotics.CANSparkMax.IdleMode;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -176,6 +175,9 @@ public class Constants {
       OUT
     }
 
+    public static final double kGearing = 1 / 2d;
+    public static final double kHoldingVoltage = 1;
+    
   }
 
   public static final class ElevatorConstants {
@@ -221,15 +223,17 @@ public class Constants {
   }
 
   public static final record ScoringSetpoint(
+      String name,
       double coneHeight,
       double cubeHeight,
       IntakeDirection intakeDirection,
-      double intakeSpeed) {
+      double coneSpeed,
+      double cubeSpeed) {
   }
 
   public static final class ScoringSetpoints {
-    public static final ScoringSetpoint kZero = new ScoringSetpoint(9.6, 9.6, IntakeDirection.IN, 0);
-    public static final ScoringSetpoint kCarry = new ScoringSetpoint(9.6, 10, IntakeDirection.IN, 0.2);
-    public static final ScoringSetpoint kUp = new ScoringSetpoint(54, 21, IntakeDirection.OUT, 0.2);
+    public static final ScoringSetpoint kZero = new ScoringSetpoint("Zero", 9.6, 9.6, IntakeDirection.IN, 0,0);
+    public static final ScoringSetpoint kCarry = new ScoringSetpoint("Carry",9.6, 10, IntakeDirection.IN, 0.2, 0.4);
+    public static final ScoringSetpoint kUp = new ScoringSetpoint("Up",54, 21, IntakeDirection.OUT, 0.3, 0.5);
   }
 }

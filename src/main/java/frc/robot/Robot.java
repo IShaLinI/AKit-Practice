@@ -12,10 +12,8 @@ import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.MAXSwerveConstants;
 import frc.robot.Constants.ScoringSetpoints;
 import frc.robot.Constants.ElevatorConstants.GamePiece;
@@ -26,9 +24,11 @@ import frc.robot.subsystems.drive.MAXSwerveIO;
 import frc.robot.subsystems.drive.MAXSwerveIO_Real;
 import frc.robot.subsystems.drive.MAXSwerveIO_Sim;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO_Real;
 import frc.robot.subsystems.elevator.ElevatorIO_Sim;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO_Sim;
 
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -74,9 +74,10 @@ public class Robot extends LoggedRobot {
                 new MAXSwerveIO_Sim()
               });
 
-  private Elevator elevator = new Elevator(mode == RobotMode.REAL ? null : new ElevatorIO_Sim());
+  private Elevator elevator = new Elevator(mode == RobotMode.REAL ? new ElevatorIO_Real() : new ElevatorIO_Sim());
+  private Intake intake = new Intake(mode == RobotMode.REAL ? null : new IntakeIO_Sim());
 
-  private CommandFactory commandFactory = new CommandFactory(drivebase, elevator);
+  private CommandFactory commandFactory = new CommandFactory(drivebase, elevator, intake);
 
   @SuppressWarnings(value = "resource")
   @Override
@@ -116,6 +117,8 @@ public class Robot extends LoggedRobot {
                     -MathUtil.applyDeadband(controller.getRightX(), 0.15)
                         * DriveConstants.kMaxAngularVelocity)));
 
+    intake.setDefaultCommand(intake.idle());
+
     autoChooser.addDefaultOption("None", null);
 
     controller.a().whileTrue(drivebase.goToPose(new Pose2d(4, 5, new Rotation2d(Math.PI))));
@@ -123,8 +126,11 @@ public class Robot extends LoggedRobot {
     controller.x().onTrue(commandFactory.changeGamePiece(GamePiece.CUBE));
     controller.y().onTrue(commandFactory.changeGamePiece(GamePiece.CONE));
 
-    controller.povDown().onTrue(elevator.changeSetpoint(ScoringSetpoints.kCarry));
-    controller.povUp().onTrue(elevator.changeSetpoint(ScoringSetpoints.kUp));
+    controller.povDown().onTrue(commandFactory.changeSetpoint(ScoringSetpoints.kCarry));
+    controller.povUp().onTrue(commandFactory.changeSetpoint(ScoringSetpoints.kUp));
+
+    controller.b().whileTrue(intake.run());
+
   }
 
   @Override
