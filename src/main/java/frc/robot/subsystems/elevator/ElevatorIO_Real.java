@@ -43,11 +43,13 @@ public class ElevatorIO_Real implements ElevatorIO {
         var velocitySignal = elevatorMotor.getVelocity();
         var dutyCycleSignal = elevatorMotor.getDutyCycle();
         var tempSignal = elevatorMotor.getDeviceTemp();
+        var currentSignal = elevatorMotor.getSupplyCurrent();
 
         positionSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
         velocitySignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
         dutyCycleSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
         tempSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency/4);
+        currentSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
 
         elevatorMotorConfigurator.apply(elevatorMotorConfigs);
         elevatorMotor.optimizeBusUtilization();

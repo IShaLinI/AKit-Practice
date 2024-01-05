@@ -34,6 +34,7 @@ public class Constants {
     public static final int kPigeon = 9;
 
     public static final int kElevator = 10;
+    public static final int kIntake = 11;
   }
 
   public static final class AutoConstants {
@@ -177,6 +178,7 @@ public class Constants {
 
     public static final double kGearing = 1 / 2d;
     public static final double kHoldingVoltage = 1;
+    public static final double kCurrentLimit = 20; // Amps
     
   }
 

@@ -27,6 +27,8 @@ import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorIO_Real;
 import frc.robot.subsystems.elevator.ElevatorIO_Sim;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIO_Real;
 import frc.robot.subsystems.intake.IntakeIO_Sim;
 
 import org.littletonrobotics.junction.LogFileUtil;
@@ -75,7 +77,7 @@ public class Robot extends LoggedRobot {
               });
 
   private Elevator elevator = new Elevator(mode == RobotMode.REAL ? new ElevatorIO_Real() : new ElevatorIO_Sim());
-  private Intake intake = new Intake(mode == RobotMode.REAL ? null : new IntakeIO_Sim());
+  private Intake intake = new Intake(mode == RobotMode.REAL ? new IntakeIO_Real() : new IntakeIO_Sim());
 
   private CommandFactory commandFactory = new CommandFactory(drivebase, elevator, intake);
 
