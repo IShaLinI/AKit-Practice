@@ -1,5 +1,8 @@
 package frc.robot.subsystems.drive;
 
+import com.choreo.lib.Choreo;
+import com.choreo.lib.ChoreoTrajectory;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -7,10 +10,15 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.CodeConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.MAXSwerveConstants;
@@ -65,6 +73,7 @@ public class MAXSwerve extends SubsystemBase {
   }
 
   /** This code runs at 50hz and is responsible for updating the IO and pose estimator */
+  @Override
   public void periodic() {
 
     lastHeading = getPose().getRotation();
@@ -74,6 +83,8 @@ public class MAXSwerve extends SubsystemBase {
       module.updateInputs();
     }
     gyroIO.updateInputs(gyroInputs);
+
+    Logger.processInputs("Gyro", gyroInputs);
 
     var gyroDelta =
         new Rotation2d(
@@ -112,23 +123,7 @@ public class MAXSwerve extends SubsystemBase {
   public Command runVelocity(Supplier<ChassisSpeeds> speeds) {
     return this.run(
         () -> {
-          // Calculate module setpoints
-          ChassisSpeeds discreteSpeeds =
-              ChassisSpeeds.discretize(speeds.get(), 1 / CodeConstants.kMainLoopFrequency);
-          SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds);
-          SwerveDriveKinematics.desaturateWheelSpeeds(
-              setpointStates, MAXSwerveConstants.kMaxDriveSpeed);
-
-          // Send setpoints to modules
-          SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
-          for (int i = 0; i < modules.length; i++) {
-            // The module returns the optimized state, useful for logging
-            optimizedSetpointStates[i] = modules[i].run(setpointStates[i]);
-          }
-
-          // Log setpoint states
-          Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
-          Logger.recordOutput("SwerveStates/SetpointsOptimized", optimizedSetpointStates);
+          this.runChassisSpeeds(speeds.get());
         });
   }
 
@@ -155,7 +150,7 @@ public class MAXSwerve extends SubsystemBase {
    *
    * @param speeds desired chassis speed
    */
-  public void runChassisSpeeds(ChassisSpeeds speeds) {
+  private void runChassisSpeeds(ChassisSpeeds speeds) {
     speeds = ChassisSpeeds.discretize(speeds, 1 / CodeConstants.kMainLoopFrequency);
     SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(speeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, MAXSwerveConstants.kMaxDriveSpeed);
@@ -207,5 +202,81 @@ public class MAXSwerve extends SubsystemBase {
     } else {
       poseEstimator.resetPosition(pose.getRotation(), getModulePositions(), pose);
     }
+  }
+
+  // Follow a choreo trajectory
+  public Command followChoreoTrajectory(ChoreoTrajectory trajectory) {
+
+    var xPIDController = new PIDController(AutoConstants.kChor_P_X, 0, 0);
+    var yPIDController = new PIDController(AutoConstants.kChor_P_Y, 0, 0);
+    var thetaPIDController = new PIDController(AutoConstants.kChor_P_Theta, 0, 0);
+
+    var choreoPIDController =
+        Choreo.choreoSwerveController(xPIDController, yPIDController, thetaPIDController);
+
+    var trajectorySequence =
+        Commands.sequence(
+            new InstantCommand(
+                () -> Logger.recordOutput("ChoreoTrajectory", trajectory.getPoses())),
+            new InstantCommand(() -> setPose(trajectory.getInitialPose())),
+            Choreo.choreoSwerveCommand(
+                trajectory,
+                this::getPose,
+                choreoPIDController,
+                this::runChassisSpeeds,
+                false,
+                this),
+            stop());
+
+    return trajectorySequence;
+  }
+
+  public Command followChoreoTrajectory(
+      ChoreoTrajectory trajectory, SequentialCommandGroup eventSequence) {
+    return followChoreoTrajectory(trajectory).alongWith(eventSequence);
+  }
+
+  @SuppressWarnings("resource")
+  public Command goToPose(Pose2d targetPose) {
+
+    var xController = new PIDController(AutoConstants.kAA_P_X, 0, 0);
+    var yController = new PIDController(AutoConstants.kAA_P_Y, 0, 0);
+    var thetaController = new PIDController(AutoConstants.kAA_P_Theta, 0, 0);
+
+    xController.setTolerance(0.02);
+    yController.setTolerance(0.02);
+    thetaController.setTolerance(Units.degreesToRadians(1));
+
+    thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    return this.run(
+            () -> {
+              Logger.recordOutput("GoToLocation", targetPose);
+
+              var xSpeed =
+                  xController.calculate(
+                      getPose().getTranslation().getX(), targetPose.getTranslation().getX());
+              var ySpeed =
+                  yController.calculate(
+                      getPose().getTranslation().getY(), targetPose.getTranslation().getY());
+              var thetaSpeed =
+                  thetaController.calculate(
+                      getPose().getRotation().getRadians(), targetPose.getRotation().getRadians());
+
+              this.runChassisSpeeds(
+                  ChassisSpeeds.fromFieldRelativeSpeeds(
+                      new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed), getPose().getRotation()));
+            })
+        .beforeStarting(
+            () -> {
+              xController.reset();
+              yController.reset();
+              thetaController.reset();
+            })
+        .until(
+            () ->
+                (xController.atSetpoint()
+                    && yController.atSetpoint()
+                    && thetaController.atSetpoint()));
   }
 }

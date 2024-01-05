@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import com.choreo.lib.Choreo;
-import com.choreo.lib.ChoreoTrajectory;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -15,15 +12,23 @@ import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.MAXSwerveConstants;
+import frc.robot.Constants.ScoringSetpoints;
+import frc.robot.Constants.ElevatorConstants.GamePiece;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIO_Real;
 import frc.robot.subsystems.drive.MAXSwerve;
 import frc.robot.subsystems.drive.MAXSwerveIO;
 import frc.robot.subsystems.drive.MAXSwerveIO_Real;
 import frc.robot.subsystems.drive.MAXSwerveIO_Sim;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO_Sim;
+
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -69,7 +74,9 @@ public class Robot extends LoggedRobot {
                 new MAXSwerveIO_Sim()
               });
 
-  private CommandFactory commandFactory = new CommandFactory(drivebase);
+  private Elevator elevator = new Elevator(mode == RobotMode.REAL ? null : new ElevatorIO_Sim());
+
+  private CommandFactory commandFactory = new CommandFactory(drivebase, elevator);
 
   @SuppressWarnings(value = "resource")
   @Override
@@ -97,8 +104,6 @@ public class Robot extends LoggedRobot {
     }
     Logger.start();
 
-    Logger.recordOutput("ChoreoTrajectory", new ChoreoTrajectory().getPoses());
-
     // Set the default command for the drivebase for TeleOP driving
     drivebase.setDefaultCommand(
         drivebase.runVelocityFieldRelative(
@@ -112,15 +117,14 @@ public class Robot extends LoggedRobot {
                         * DriveConstants.kMaxAngularVelocity)));
 
     autoChooser.addDefaultOption("None", null);
-    autoChooser.addOption(
-        "Test", commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test"), commandFactory.TestEvents()));
-    autoChooser.addOption(
-        "Test2", commandFactory.followChoreoTrajectory(Choreo.getTrajectory("Test2")));
 
-    controller.a().whileTrue(
-      commandFactory.goToPose(new Pose2d(4,4 , new Rotation2d(Math.PI)))
-    );
+    controller.a().whileTrue(drivebase.goToPose(new Pose2d(4, 5, new Rotation2d(Math.PI))));
 
+    controller.x().onTrue(commandFactory.changeGamePiece(GamePiece.CUBE));
+    controller.y().onTrue(commandFactory.changeGamePiece(GamePiece.CONE));
+
+    controller.povDown().onTrue(elevator.changeSetpoint(ScoringSetpoints.kCarry));
+    controller.povUp().onTrue(elevator.changeSetpoint(ScoringSetpoints.kUp));
   }
 
   @Override
@@ -149,7 +153,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousExit() {
-    if (autoChooser.get() != null){
+    if (autoChooser.get() != null) {
       CommandScheduler.getInstance().cancel(autoChooser.get());
       CommandScheduler.getInstance().schedule(drivebase.stop());
     }

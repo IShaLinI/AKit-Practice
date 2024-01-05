@@ -102,6 +102,6 @@ public class MAXSwerveIO_Sim implements MAXSwerveIO {
   /** Gets the turn angle */
   @Override
   public Rotation2d getTurnAngle() {
-    return new Rotation2d(turnMotor.getAngularPositionRad());
+    return Rotation2d.fromRadians(turnMotor.getAngularPositionRad());
   }
 }

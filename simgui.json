@@ -15,10 +15,10 @@
   "NetworkTables": {
     "transitory": {
       "AdvantageKit": {
+        "Elevator": {
+          "open": true
+        },
         "RealOutputs": {
-          "SwerveStates": {
-            "open": true
-          },
           "open": true
         },
         "open": true
