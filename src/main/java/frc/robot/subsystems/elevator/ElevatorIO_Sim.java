@@ -15,9 +15,9 @@ public class ElevatorIO_Sim implements ElevatorIO {
   private ElevatorSim elevatorSim =
       new ElevatorSim(
           DCMotor.getFalcon500(1),
-          1/ElevatorConstants.kGearing,
+          1 / ElevatorConstants.kGearing,
           4,
-          Units.inchesToMeters(1.751),
+          Units.inchesToMeters(1.751/2),
           Units.inchesToMeters(0),
           Units.inchesToMeters(29),
           false,
@@ -36,13 +36,16 @@ public class ElevatorIO_Sim implements ElevatorIO {
     inputs.motorTemperature = 0;
   }
 
-  public double getElevatorHeight(){
-    return (Units.metersToInches(elevatorSim.getPositionMeters()) * ElevatorConstants.kStages * Math.sin(ElevatorConstants.kAngle)) + ElevatorConstants.kMinHeight;
+  public double getElevatorHeight() {
+    return (Units.metersToInches(elevatorSim.getPositionMeters())
+            * ElevatorConstants.kStages
+            * Math.sin(ElevatorConstants.kAngle))
+        + ElevatorConstants.kMinHeight;
   }
 
   @Override
   public void run(double setpoint) {
-    voltage = MathUtil.clamp(elevatorController.calculate(getElevatorHeight(), setpoint),-12,12);
+    voltage = MathUtil.clamp(elevatorController.calculate(getElevatorHeight(), setpoint), -12, 12);
     elevatorSim.setInputVoltage(voltage);
   }
 }

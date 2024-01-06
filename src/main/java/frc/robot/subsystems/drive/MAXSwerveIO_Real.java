@@ -111,7 +111,6 @@ public class MAXSwerveIO_Real implements MAXSwerveIO {
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnMotor.getAppliedOutput();
     inputs.turnCurrentAmps = turnMotor.getOutputCurrent();
-
   }
 
   /** Sets the drive MPS Setpoint */

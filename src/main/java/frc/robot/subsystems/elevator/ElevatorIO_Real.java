@@ -6,7 +6,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.math.MathUtil;
 import frc.robot.Constants.CANID;
 import frc.robot.Constants.CodeConstants;
@@ -14,66 +13,65 @@ import frc.robot.Constants.ElevatorConstants;
 
 public class ElevatorIO_Real implements ElevatorIO {
 
-    private TalonFX elevatorMotor = new TalonFX(CANID.kElevator);
+  private TalonFX elevatorMotor = new TalonFX(CANID.kElevator);
 
-    private PositionVoltage positionVoltage = new PositionVoltage(0);
+  private PositionVoltage positionVoltage = new PositionVoltage(ElevatorConstants.kMinHeight);
 
-    public ElevatorIO_Real(){
+  public ElevatorIO_Real() {
 
-        var elevatorMotorConfigurator = elevatorMotor.getConfigurator();
-        var elevatorMotorConfigs = new TalonFXConfiguration();
+    var elevatorMotorConfigurator = elevatorMotor.getConfigurator();
+    var elevatorMotorConfigs = new TalonFXConfiguration();
 
-        elevatorMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        elevatorMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        
-        elevatorMotorConfigs.CurrentLimits.StatorCurrentLimit = ElevatorConstants.kCurrentLimit;
-        elevatorMotorConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
-        elevatorMotorConfigs.CurrentLimits.SupplyCurrentLimit = ElevatorConstants.kCurrentLimit;
-        elevatorMotorConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
+    elevatorMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    elevatorMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-        elevatorMotorConfigs.Slot0.kP = ElevatorConstants.kP;
-        elevatorMotorConfigs.Slot0.kI = ElevatorConstants.kI;
-        elevatorMotorConfigs.Slot0.kD = ElevatorConstants.kD;
-        elevatorMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
-        elevatorMotorConfigs.Slot0.kG = ElevatorConstants.kG;
+    elevatorMotorConfigs.CurrentLimits.StatorCurrentLimit = ElevatorConstants.kCurrentLimit;
+    elevatorMotorConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
+    elevatorMotorConfigs.CurrentLimits.SupplyCurrentLimit = ElevatorConstants.kCurrentLimit;
+    elevatorMotorConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-        elevatorMotorConfigs.Feedback.SensorToMechanismRatio = ElevatorConstants.kSensorToVericalInches;
+    elevatorMotorConfigs.Slot0.kP = ElevatorConstants.kP;
+    elevatorMotorConfigs.Slot0.kI = ElevatorConstants.kI;
+    elevatorMotorConfigs.Slot0.kD = ElevatorConstants.kD;
+    elevatorMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
+    elevatorMotorConfigs.Slot0.kG = ElevatorConstants.kG;
 
-        var positionSignal = elevatorMotor.getPosition();
-        var velocitySignal = elevatorMotor.getVelocity();
-        var dutyCycleSignal = elevatorMotor.getDutyCycle();
-        var tempSignal = elevatorMotor.getDeviceTemp();
-        var currentSignal = elevatorMotor.getSupplyCurrent();
+    elevatorMotorConfigs.Feedback.SensorToMechanismRatio = ElevatorConstants.kSensorToVerticalInches;
 
-        positionSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
-        velocitySignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
-        dutyCycleSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
-        tempSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency/4);
-        currentSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
+    var positionSignal = elevatorMotor.getPosition();
+    var velocitySignal = elevatorMotor.getVelocity();
+    var dutyCycleSignal = elevatorMotor.getDutyCycle();
+    var tempSignal = elevatorMotor.getDeviceTemp();
+    var currentSignal = elevatorMotor.getSupplyCurrent();
 
-        elevatorMotorConfigurator.apply(elevatorMotorConfigs);
-        elevatorMotor.optimizeBusUtilization();
+    positionSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
+    velocitySignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
+    dutyCycleSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
+    tempSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency / 4);
+    currentSignal.setUpdateFrequency(CodeConstants.kMainLoopFrequency);
 
-        elevatorMotor.setPosition(ElevatorConstants.kMinHeight);
-    }
+    elevatorMotorConfigurator.apply(elevatorMotorConfigs);
+    elevatorMotor.optimizeBusUtilization();
 
-    @Override
-    public void updateInputs(ElevatorIOInputs inputs) {
-        inputs.currentHeightInches = getElevatorHeight();
-        inputs.motorCurrent = elevatorMotor.getSupplyCurrent().getValueAsDouble();
-        inputs.motorVoltage = elevatorMotor.getDutyCycle().getValueAsDouble() * 12;
-        inputs.motorTemperature = elevatorMotor.getDeviceTemp().getValueAsDouble();
-    }
+    elevatorMotor.setPosition(ElevatorConstants.kMinHeight);
+  }
 
-    @Override
-    public void run(double setpoint) {
-        setpoint = MathUtil.clamp(setpoint, ElevatorConstants.kMinHeight, ElevatorConstants.kMaxHeight);
-        positionVoltage.Position = setpoint;
-        elevatorMotor.setControl(positionVoltage);
-    }
+  @Override
+  public void updateInputs(ElevatorIOInputs inputs) {
+    inputs.currentHeightInches = getElevatorHeight();
+    inputs.motorCurrent = elevatorMotor.getSupplyCurrent().getValueAsDouble();
+    inputs.motorVoltage = elevatorMotor.getDutyCycle().getValueAsDouble() * elevatorMotor.getSupplyVoltage().getValueAsDouble();
+    inputs.motorTemperature = elevatorMotor.getDeviceTemp().getValueAsDouble();
+  }
 
-    public double getElevatorHeight(){
-        return elevatorMotor.getPosition().getValueAsDouble() + ElevatorConstants.kMinHeight;
-    }
+  @Override
+  public void run(double setpoint) {
+    setpoint = MathUtil.clamp(setpoint, ElevatorConstants.kMinHeight, ElevatorConstants.kMaxHeight);
+    positionVoltage.Position = setpoint;
+    elevatorMotor.setControl(positionVoltage);
+  }
 
+  public double getElevatorHeight() {
+    return elevatorMotor.getPosition().getValueAsDouble();
+  }
 }

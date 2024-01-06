@@ -14,5 +14,6 @@ public interface ElevatorIO {
   }
 
   public default void updateInputs(ElevatorIOInputs inputs) {}
+
   public default void run(double setpoint) {}
 }
